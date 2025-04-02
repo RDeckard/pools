@@ -1,8 +1,8 @@
 # Pools
 
-Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/pools`. To experiment with that code, run `bin/console` for an interactive prompt.
-
-TODO: Delete this and the text above, and describe your gem
+ An abstraction for Thread Pool. Useful for tasks that need to do bunch of I/O.
+ - More efficient than poping threads by batch
+ - Use a threadsafe queue and threadsafe errors collection
 
 ## Installation
 
@@ -22,7 +22,32 @@ Or install it yourself as:
 
 ## Usage
 
-TODO: Write usage instructions here
+``` ruby
+ thread_pool = ThreadPool.new(size: 4)
+
+ BUNCH_OF_URL_TO_DOWNLOAD.each do |file_to_download|
+   thread_pool.schedule(file_to_download) do |file_to_download|
+     # This block will be executed in background by a thread from the thread_pool
+     DownloadService.new(file_to_download).perform # fictive service
+   end
+ end
+
+ # Start the threads (4 here) and let them to consume queued jobs in background:
+ thread_pool.start # non blocking operation
+ # ... do whatever you want ...
+ # NOTE: It is NOT mandatory to call #start as #wait will call it if it was not already called.
+ # Close the queue and wait for all scheduled jobs to finish:
+ thread_pool.wait
+ # All exceptions collected by the threads are aggregated in `thread_pool.errors`
+ ```
+
+ ### Note
+ 
+ - A thread pool can be #start even if no job was pushed in the queue yet: threads will just wait for jobs.
+ - An empty job queue doesn't mean that work is done (maybe some jobs will be #schedule later?).
+ - So jobs can be #schedule anytime while the queue is still open.
+ - To close the queue, use #terminated or #wait (cf. below to see the differences)
+ - If you don't #wait the thread_pool and the main thread exit before all jobs are done, all remaining jobs will be lost (knowing that #terminated call #wait too).
 
 ## Development
 
