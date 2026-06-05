@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
-require "thread_pool"
+require "pools/thread_pool"
 
-describe ThreadPool do
+describe Pools::ThreadPool do
   subject(:thread_pool) { described_class.new } # Default: one background thread
 
   describe "global behavior" do

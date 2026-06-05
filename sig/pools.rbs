@@ -1,4 +1,43 @@
 module Pools
   VERSION: String
   # See the writing guide of rbs: https://github.com/ruby/rbs#guides
+
+  class Error < StandardError
+  end
+
+  class ThreadPool
+    attr_reader size: Integer
+    attr_reader job_queue: Thread::Queue
+    attr_reader errors: Array[Hash[Symbol, untyped]]
+
+    def initialize: (?size: Integer, ?verbose: bool) -> void
+    def start: () -> self
+    def schedule: (*untyped args) { (*untyped) -> untyped } -> void
+    def wait: () -> void
+    def terminate: () -> void
+    def kill_all!: () -> void
+    def error_report: () -> void
+  end
+
+  class RactorPool
+    SENTINEL: Symbol
+
+    attr_reader size: Integer
+
+    def initialize: (?size: Integer, ?verbose: bool) -> void
+    def start: () -> self
+    def schedule: (String | Symbol module_name, *untyped args) -> self
+    def wait: () -> self
+    def results: () -> Array[Hash[Symbol, untyped]]
+  end
+
+  class RactorWorker < Module
+    attr_reader pool: RactorPool
+
+    def initialize: (size: Integer, ?verbose: bool) -> void
+    def start: () -> self
+    def wait: () -> self
+    def results: () -> Array[Hash[Symbol, untyped]]
+    def included: (Module base) -> void
+  end
 end

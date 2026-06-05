@@ -1,5 +1,11 @@
+plugins:
+  - rubocop-performance
+  - rubocop-rspec
+
 AllCops:
-  TargetRubyVersion: 3.1
+  TargetRubyVersion: 4.0
+  NewCops: enable
+  SuggestExtensions: false
 
 Style/StringLiterals:
   Enabled: true
@@ -8,6 +14,9 @@ Style/StringLiterals:
 Style/StringLiteralsInInterpolation:
   Enabled: true
   EnforcedStyle: double_quotes
+
+Style/Documentation:
+  Enabled: false
 
 Layout/LineLength:
   Max: 120
@@ -18,3 +27,33 @@ Layout/FirstHashElementIndentation:
 Layout/HashAlignment:
   EnforcedHashRocketStyle: table
   EnforcedColonStyle: table
+
+Metrics/BlockLength:
+  Exclude:
+    - "spec/**/*"
+
+# Pool setup methods spawn workers, log, and flush the backlog in one place.
+Metrics/AbcSize:
+  Max: 20
+
+Metrics/MethodLength:
+  Max: 20
+
+Naming/MethodParameterName:
+  AllowedNames:
+    - a
+    - b
+    - n
+
+# Specs favour readable, multi-assertion scenarios over one-expectation-per-example.
+RSpec/ExampleLength:
+  Enabled: false
+
+RSpec/MultipleExpectations:
+  Enabled: false
+
+RSpec/MessageSpies:
+  Enabled: false
+
+RSpec/NestedGroups:
+  Max: 4

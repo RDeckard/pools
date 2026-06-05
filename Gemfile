@@ -2,6 +2,8 @@
 
 source "https://rubygems.org"
 
+ruby file: ".tool-versions"
+
 # Specify your gem's dependencies in pools.gemspec
 # gemspec
 

@@ -2,37 +2,58 @@
 
 puts "RUBY_VERSION: #{RUBY_VERSION}"
 
-require_relative "../lib/ractor_worker"
+require_relative "../lib/pools"
 
-RACTORS_COUNT = 4
-VERBOSE       = true
+POOL_SIZE  = 4
+TASKS      = POOL_SIZE * 2
+ITERATIONS = 5_000_000
 
-# A custom module to include to all your worker class
-RWorker = RactorWorker.new(size: RACTORS_COUNT, verbose: VERBOSE)
+def cpu_task(iterations)
+  sum = 0.0
+  i = 0
+  while i < iterations
+    sum += Math.sqrt(i)
+    i += 1
+  end
+  sum.round(2)
+end
 
-class AWorker
-  # Adding AWorker.perform and AWorker.perform_async class method
+puts "\n== Sequential (#{TASKS} tasks, 1 thread) =="
+start_at = Time.now
+TASKS.times { cpu_task(ITERATIONS) }
+puts "#{(Time.now - start_at).round(2)}s"
+
+puts "\n== ThreadPool (#{TASKS} tasks, #{POOL_SIZE} threads) =="
+start_at = Time.now
+pool = Pools::ThreadPool.new(size: POOL_SIZE)
+TASKS.times { pool.schedule { cpu_task(ITERATIONS) } }
+pool.wait
+puts "#{(Time.now - start_at).round(2)}s"
+
+puts "\n== RactorPool (#{TASKS} tasks, #{POOL_SIZE} ractors) =="
+
+RWorker = Pools::RactorWorker.new(size: POOL_SIZE, verbose: false)
+
+class CpuWorker
   include RWorker
 
-  def initialize(number)
-    @number = number
+  def initialize(iterations)
+    @iterations = iterations
   end
 
   def call
-    output = (0..@number).lazy.reduce(0) { |acc, item| acc + item }
-
-    # Threadsafe ouput
-    RWorker.puts output
+    sum = 0.0
+    i = 0
+    while i < @iterations
+      sum += Math.sqrt(i)
+      i += 1
+    end
+    sum.round(2)
   end
 end
 
-# PROGRAM
+RWorker.start
 start_at = Time.now
-
-# Perform `RACTORS_COUNT * 2` tasks high CPU consuming in parallel
-(RACTORS_COUNT * 2).times do
-  AWorker.perform_async(10_000_000)
-end
+TASKS.times { CpuWorker.perform_async(ITERATIONS) }
 RWorker.wait
-
-puts "It takes #{(Time.now - start_at).round(2)}s"
+puts "#{(Time.now - start_at).round(2)}s"
